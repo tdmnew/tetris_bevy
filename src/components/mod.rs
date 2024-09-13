@@ -27,14 +27,7 @@ impl Size {
  *  Entities
  **/
 #[derive(Component)]
-pub struct Tetromino {
-    movement_timer: Timer,
-}
+pub struct TetrominoPiece;
 
-impl Default for Tetromino {
-    fn default() -> Self {
-        Self {
-            movement_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
-        }
-    }
-}
+#[derive(Component)]
+pub struct DespawnedTetrominoPiece;

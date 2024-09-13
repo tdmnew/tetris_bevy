@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
-use crate::components::{Position, Size};
-use crate::constants::{ARENA_HEIGHT, ARENA_WIDTH};
+use crate::{
+    components::{Position, Size},
+    constants::{ARENA_HEIGHT, ARENA_WIDTH},
+};
 
 pub fn pos_translation(mut window: Query<&mut Window>, mut q: Query<(&Position, &mut Transform)>) {
     fn convert(pos: f32, bound_window: f32, tile_size: f32) -> f32 {
