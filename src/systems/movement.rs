@@ -30,7 +30,7 @@ pub fn movement(
 
             if !collision_detected {
                 for (_, mut pos) in tetromino_pieces.iter_mut() {
-                    pos.x -= 1
+                    pos.x -= 1  
                 }
             }
         }
@@ -71,30 +71,6 @@ pub fn descend(
         let mut piece = positions.get_mut(tetromino_piece).unwrap();
 
         piece.y -= 1
-    }
-}
-
-pub fn check_collision(
-    mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
-    despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
-    mut positions: Query<&mut Position>,
-    mut despawn_writer: EventWriter<DespawnTetrominoEvent>,
-) {
-    let despawned_pieces_positions = despawned_pieces
-        .iter()
-        .map(|e| *positions.get_mut(e).unwrap())
-        .collect::<Vec<Position>>();
-
-    for tetromino_piece in tetromino_pieces.iter_mut() {
-        let piece = positions.get_mut(tetromino_piece).unwrap();
-
-        let mut next_down_pos = piece.clone();
-        next_down_pos.y -= 1;
-
-        if piece.y == 0 || despawned_pieces_positions.contains(&next_down_pos) {
-            despawn_writer.send(DespawnTetrominoEvent);
-            return;
-        }
     }
 }
 
@@ -152,6 +128,30 @@ pub fn check_movement_collision(
                 }
             }
             _ => return,
+        }
+    }
+}
+
+pub fn check_descend_collision(
+    mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
+    despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
+    mut positions: Query<&mut Position>,
+    mut despawn_writer: EventWriter<DespawnTetrominoEvent>,
+) {
+    let despawned_pieces_positions = despawned_pieces
+        .iter()
+        .map(|e| *positions.get_mut(e).unwrap())
+        .collect::<Vec<Position>>();
+
+    for tetromino_piece in tetromino_pieces.iter_mut() {
+        let piece = positions.get_mut(tetromino_piece).unwrap();
+
+        let mut next_down_pos = piece.clone();
+        next_down_pos.y -= 1;
+
+        if piece.y == 0 || despawned_pieces_positions.contains(&next_down_pos) {
+            despawn_writer.send(DespawnTetrominoEvent);
+            return;
         }
     }
 }
