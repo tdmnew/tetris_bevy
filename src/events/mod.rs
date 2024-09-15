@@ -13,3 +13,6 @@ pub struct DespawnTetrominoEvent;
 
 #[derive(Event)]
 pub struct NearbyPieceEvent;
+
+#[derive(Event)]
+pub struct UpdateScoreEvent;

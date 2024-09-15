@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    events::{DespawnTetrominoEvent, NearbyPieceEvent, GameOverEvent},
-    resources::*,
-    systems::{events::*, movement::*, spawning::*, translation_scale::*},
+    events::{DespawnTetrominoEvent, GameOverEvent, NearbyPieceEvent, UpdateScoreEvent},
+    resources::{DescendTimer, Score, SpawnArea, TetrominoSegment},
+    systems::{collision::*, events::*, movement::*, setup::*, spawning::*, translation_scale::*},
 };
 
 mod components;
@@ -12,11 +12,9 @@ mod events;
 mod resources;
 mod systems;
 
-// 
 // Screen Resolutions
 // 400, 600
 // 500, 800
-
 
 fn main() {
     App::new()
@@ -28,34 +26,35 @@ fn main() {
             }),
             ..default()
         }))
-        .add_systems(
-            Startup,
-            (
-                |mut commands: Commands| {
-                    commands.spawn(Camera2dBundle::default());
-                },
-                spawn_tetromino,
-            ),
-        )
+        .add_systems(Startup, (setup, spawn_tetromino))
         .add_systems(
             Update,
             (
                 descend,
-                movement,
-                check_movement_collision.before(movement),
-                check_descend_collision.before(descend),
                 spawn_new_tetromino.after(movement),
                 game_over.after(spawn_new_tetromino),
                 remove_row.after(spawn_new_tetromino),
             ),
         )
+        .add_systems(
+            PostUpdate,
+            (
+                movement,
+                check_movement_collision.before(movement),
+                check_descend_collision.before(descend),
+                update_score.after(game_over),
+                update_score.after(remove_row),
+            ),
+        )
         .add_systems(FixedUpdate, (size_scaling, pos_translation))
-        .insert_resource(TetrominoSegment::default())
-        .insert_resource(DespawnedTetrominoPieces::default())
-        .insert_resource(MovementTimer::default())
+        .insert_resource(ClearColor(Color::rgb(0.200, 0.200, 0.200)))
+        .insert_resource(DescendTimer::default())
+        .insert_resource(Score::default())
         .insert_resource(SpawnArea::default())
+        .insert_resource(TetrominoSegment::default())
         .add_event::<DespawnTetrominoEvent>()
-        .add_event::<NearbyPieceEvent>()
         .add_event::<GameOverEvent>()
+        .add_event::<NearbyPieceEvent>()
+        .add_event::<UpdateScoreEvent>()
         .run();
 }

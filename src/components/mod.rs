@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-/**
- * Postiion and Scale
- **/
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
     pub x: i32,
@@ -23,11 +20,11 @@ impl Size {
     }
 }
 
-/**
- *  Entities
- **/
 #[derive(Component)]
 pub struct TetrominoPiece;
 
 #[derive(Component)]
 pub struct DespawnedTetrominoPiece;
+
+#[derive(Component)]
+pub struct ScoreText;

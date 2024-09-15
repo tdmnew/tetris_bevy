@@ -1,16 +1,17 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{DespawnedTetrominoPiece, Position, TetrominoPiece},
+    components::{DespawnedTetrominoPiece, Position, ScoreText, TetrominoPiece},
     constants::{ARENA_HEIGHT, ARENA_WIDTH},
-    events::{DespawnTetrominoEvent, GameOverEvent},
-    resources::{DespawnedTetrominoPieces, TetrominoSegment},
+    events::{DespawnTetrominoEvent, GameOverEvent, UpdateScoreEvent},
+    resources::{Score, TetrominoSegment},
     systems::spawning::spawn_tetromino,
     SpawnArea,
 };
 
 pub fn game_over(
     mut commands: Commands,
+    mut update_score_writer: EventWriter<UpdateScoreEvent>,
     mut game_over_reader: EventReader<GameOverEvent>,
     mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
     mut despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
@@ -18,6 +19,8 @@ pub fn game_over(
     spawn_area: ResMut<SpawnArea>,
 ) {
     if game_over_reader.read().next().is_some() {
+        update_score_writer.send(UpdateScoreEvent);
+
         for ent in tetromino_pieces.iter_mut() {
             commands.entity(ent).despawn();
         }
@@ -36,7 +39,6 @@ pub fn spawn_new_tetromino(
     mut despawn_reader: EventReader<DespawnTetrominoEvent>,
     tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
     mut segments: ResMut<TetrominoSegment>,
-    mut despawned_pieces: ResMut<DespawnedTetrominoPieces>,
     positions: Query<&mut Position>,
     spawn_area: ResMut<SpawnArea>,
 ) {
@@ -57,8 +59,6 @@ pub fn spawn_new_tetromino(
                 .entity(piece)
                 .remove::<TetrominoPiece>()
                 .insert(DespawnedTetrominoPiece);
-
-            despawned_pieces.push(piece);
         }
 
         spawn_tetromino(commands, segments, spawn_area);
@@ -69,6 +69,7 @@ pub fn remove_row(
     mut commands: Commands,
     despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
     mut positions: Query<&mut Position>,
+    mut update_score_writer: EventWriter<UpdateScoreEvent>,
 ) {
     for y in 0..ARENA_HEIGHT {
         let mut y_axis_pieces = despawned_pieces
@@ -80,6 +81,8 @@ pub fn remove_row(
             .collect::<Vec<Entity>>();
 
         if y_axis_pieces.len() == (ARENA_WIDTH as usize) {
+            update_score_writer.send(UpdateScoreEvent);
+
             for ent in y_axis_pieces.iter_mut() {
                 commands.entity(*ent).despawn();
             }
@@ -98,6 +101,31 @@ pub fn remove_row(
                     position.y -= 1
                 }
             }
+        }
+    }
+}
+
+pub fn update_score(
+    mut score: ResMut<Score>,
+    mut query: Query<&mut Text, With<ScoreText>>,
+    mut game_over_reader: EventReader<GameOverEvent>,
+    mut update_score_reader: EventReader<UpdateScoreEvent>,
+) {
+    if update_score_reader.read().into_iter().next().is_some() {
+        let new_score = score.0 + 10;
+        score.0 = new_score;
+
+        for mut text in &mut query {
+            text.sections[1].value = format!("{new_score:.2}");
+        }
+    }
+
+    if game_over_reader.read().into_iter().next().is_some() {
+        let new_score = 0;
+        score.0 = new_score;
+
+        for mut text in &mut query {
+            text.sections[1].value = format!("{new_score:.2}");
         }
     }
 }

@@ -1,69 +1,78 @@
 use bevy::prelude::*;
+use std::f64::consts::PI;
 
 use crate::{
-    components::{DespawnedTetrominoPiece, Position, TetrominoPiece},
-    constants::ARENA_WIDTH,
-    events::{DespawnTetrominoEvent, NearbyPieceEvent},
-    resources::MovementTimer,
+    components::{Position, TetrominoPiece},
+    events::NearbyPieceEvent,
+    resources::DescendTimer,
 };
+
+const ANGLE: f64 = 90.0 * (PI / 180.0);
 
 pub fn movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut nearby_piece_reader: EventReader<NearbyPieceEvent>,
-    mut tetromino_pieces: Query<(&TetrominoPiece, &mut Position)>,
+    mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
+    mut positions: Query<&mut Position>,
 ) {
-    let key_pressed = keyboard_input.get_just_pressed().next();
+    let key_just_pressed = keyboard_input.get_just_pressed().next();
 
-    match key_pressed {
-        // Some(KeyCode::ArrowUp) => {
-        //     let collision_detected = nearby_piece_reader.read().next().is_some();
+    let collision_detected = nearby_piece_reader.read().next().is_some();
+    if collision_detected {
+        return;
+    }
 
-        //     if !collision_detected {
-        //         for (_, mut pos) in tetromino_pieces.iter_mut() {
-        //             let mut new_pos = pos.clone();
+    match key_just_pressed {
+        Some(&KeyCode::ArrowUp) => {
+            let axis_point = {
+                let entity = tetromino_pieces.iter().nth(1).unwrap().clone();
 
-        //         }
-        //     }
-        // }
+                *positions.get_mut(entity).unwrap()
+            };
+
+            for entity in tetromino_pieces.iter_mut() {
+                let mut pos = positions.get_mut(entity).unwrap();
+
+                let translated_x = pos.x - axis_point.x;
+                let translated_y = pos.y - axis_point.y;
+
+                pos.x = translated_x * (ANGLE.cos() as i32) - translated_y * (ANGLE.sin() as i32)
+                    + axis_point.x;
+                pos.y = translated_x * (ANGLE.sin() as i32)
+                    + translated_y * (ANGLE.cos() as i32)
+                    + axis_point.y;
+            }
+        }
         Some(KeyCode::ArrowLeft) => {
-            let collision_detected = nearby_piece_reader.read().next().is_some();
-
-            if !collision_detected {
-                for (_, mut pos) in tetromino_pieces.iter_mut() {
-                    pos.x -= 1  
-                }
+            for entity in tetromino_pieces.iter_mut() {
+                let mut pos = positions.get_mut(entity).unwrap();
+                pos.x -= 1
             }
         }
         Some(KeyCode::ArrowRight) => {
-            let collision_detected = nearby_piece_reader.read().next().is_some();
-
-            if !collision_detected {
-                for (_, mut pos) in tetromino_pieces.iter_mut() {
-                    pos.x += 1
-                }
+            for entity in tetromino_pieces.iter_mut() {
+                let mut pos = positions.get_mut(entity).unwrap();
+                pos.x += 1
             }
         }
         Some(KeyCode::ArrowDown) => {
-            let collision_detected = nearby_piece_reader.read().next().is_some();
-
-            if !collision_detected {
-                for (_, mut pos) in tetromino_pieces.iter_mut() {
-                    pos.y -= 1
-                }
+            for entity in tetromino_pieces.iter_mut() {
+                let mut pos = positions.get_mut(entity).unwrap();
+                pos.y -= 1
             }
         }
         _ => return,
-    };
+    }
 }
 
 pub fn descend(
     time: Res<Time>,
-    mut movement_timer: ResMut<MovementTimer>,
+    mut descend_timer: ResMut<DescendTimer>,
     mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
     mut positions: Query<&mut Position>,
 ) {
-    movement_timer.0.tick(time.delta());
-    if !movement_timer.0.finished() {
+    descend_timer.0.tick(time.delta());
+    if !descend_timer.0.finished() {
         return;
     }
 
@@ -71,87 +80,5 @@ pub fn descend(
         let mut piece = positions.get_mut(tetromino_piece).unwrap();
 
         piece.y -= 1
-    }
-}
-
-pub fn check_movement_collision(
-    mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
-    despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
-    mut positions: Query<&mut Position>,
-    mut nearby_piece_writer: EventWriter<NearbyPieceEvent>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    let key_pressed = keyboard_input.get_just_pressed().next();
-
-    let despawned_pieces_positions = despawned_pieces
-        .iter()
-        .map(|e| *positions.get_mut(e).unwrap())
-        .collect::<Vec<Position>>();
-
-    for tetromino_piece in tetromino_pieces.iter_mut() {
-        let piece = positions.get_mut(tetromino_piece).unwrap();
-
-        match key_pressed {
-            Some(KeyCode::ArrowLeft) => {
-                let mut next_left_movement = piece.clone();
-                next_left_movement.x -= 1;
-
-                if despawned_pieces_positions.contains(&next_left_movement)
-                    || next_left_movement.x == -1
-                    || next_left_movement.y == 0
-                {
-                    nearby_piece_writer.send(NearbyPieceEvent);
-                }
-            }
-            Some(KeyCode::ArrowRight) => {
-                let mut next_right_movement = piece.clone();
-                next_right_movement.x += 1;
-
-                if despawned_pieces_positions.contains(&next_right_movement)
-                    || next_right_movement.x == (ARENA_WIDTH as i32)
-                    || next_right_movement.y == 0
-                {
-                    nearby_piece_writer.send(NearbyPieceEvent);
-                }
-            }
-            Some(KeyCode::ArrowDown) => {
-                let mut down_acc_pos = piece.clone();
-                let mut down_movement_pos = piece.clone();
-                down_movement_pos.y -= 1;
-                down_acc_pos.y -= 2;
-
-                if despawned_pieces_positions.contains(&down_movement_pos)
-                    || despawned_pieces_positions.contains(&down_acc_pos)
-                    || down_movement_pos.y == 0
-                {
-                    nearby_piece_writer.send(NearbyPieceEvent);
-                }
-            }
-            _ => return,
-        }
-    }
-}
-
-pub fn check_descend_collision(
-    mut tetromino_pieces: Query<Entity, With<TetrominoPiece>>,
-    despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
-    mut positions: Query<&mut Position>,
-    mut despawn_writer: EventWriter<DespawnTetrominoEvent>,
-) {
-    let despawned_pieces_positions = despawned_pieces
-        .iter()
-        .map(|e| *positions.get_mut(e).unwrap())
-        .collect::<Vec<Position>>();
-
-    for tetromino_piece in tetromino_pieces.iter_mut() {
-        let piece = positions.get_mut(tetromino_piece).unwrap();
-
-        let mut next_down_pos = piece.clone();
-        next_down_pos.y -= 1;
-
-        if piece.y == 0 || despawned_pieces_positions.contains(&next_down_pos) {
-            despawn_writer.send(DespawnTetrominoEvent);
-            return;
-        }
     }
 }

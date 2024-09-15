@@ -33,20 +33,20 @@ fn draw_tetromino_pieces(commands: &mut Commands, spawn_area: &mut SpawnArea) ->
 
     for (y_index, y_axis) in TETROMINO_VARIANTS[rand_index].iter().enumerate() {
         for (x_index, segment) in y_axis.iter().enumerate() {
-            let piece_pos = Position {
-                x: (x_index as i32) + 2,
-                y: (y_index as i32) + 8,
-            };
-
             if *segment == 1 {
+                let piece_pos = Position {
+                    x: (x_index as i32) + 2,
+                    y: (y_index as i32) + 10,
+                };
+
                 entities.push(draw_piece(
                     commands,
                     TETROMINO_COLORS[rand_index],
                     piece_pos,
                 ));
-            }
 
-            spawn_area.push(piece_pos);
+                spawn_area.push(piece_pos);
+            }
         }
     }
 
