@@ -1,13 +1,11 @@
 use bevy::prelude::*;
-use std::f64::consts::PI;
 
 use crate::{
     components::{Position, TetrominoPiece},
     events::NearbyPieceEvent,
     resources::DescendTimer,
+    constants::ANGLE
 };
-
-const ANGLE: f64 = 90.0 * (PI / 180.0);
 
 pub fn movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,

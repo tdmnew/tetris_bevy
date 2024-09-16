@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use bevy::prelude::*;
 
 /**
@@ -19,14 +20,7 @@ pub const ARENA_WIDTH: u32 = 8;
  */
 type AreaSize = [[i32; 4]; 3];
 
-//
-// The vec! will keep its index position, we're just shifting the positions around not their
-// position
-//
-// therefore the first adjacent bottom or right piece will still be the axis
-//
-// second item in the array should always be the axis?
-//
+pub const ANGLE: f64 = 90.0 * (PI / 180.0);
 
 pub const L_SHAPE: AreaSize = [
     [0, 1, 0, 0], 
