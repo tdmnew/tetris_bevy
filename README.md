@@ -11,4 +11,4 @@ Still has a few bugs with collision that I may try to iron out.
 - ~Tetromino Rotation~
 - ~Scores~
 - ~Fix collision bugs with rotation and acceleration~
-- (Maybe) replace the simple shapes with actual sprites.
+- ~(Maybe) replace the simple shapes with actual sprites.~
