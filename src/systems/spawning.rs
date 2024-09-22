@@ -7,11 +7,17 @@ use crate::{
     resources::{SpawnArea, TetrominoSegment},
 };
 
-fn draw_piece(commands: &mut Commands, tetromino_color: Color, position: Position) -> Entity {
+fn draw_piece(
+    commands: &mut Commands,
+    color: &str,
+    position: Position,
+    server: &Res<AssetServer>,
+) -> Entity {
     commands
         .spawn(SpriteBundle {
+            texture: server.load(format!("{}-brick.png", color)),
             sprite: Sprite {
-                color: tetromino_color,
+                custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
             transform: Transform {
@@ -26,7 +32,11 @@ fn draw_piece(commands: &mut Commands, tetromino_color: Color, position: Positio
         .id()
 }
 
-fn draw_tetromino_pieces(commands: &mut Commands, spawn_area: &mut SpawnArea) -> Vec<Entity> {
+fn draw_tetromino_pieces(
+    commands: &mut Commands,
+    spawn_area: &mut SpawnArea,
+    server: &Res<AssetServer>,
+) -> Vec<Entity> {
     let mut entities: Vec<Entity> = vec![];
 
     let rand_index = rand::thread_rng().gen_range(0, TETROMINO_VARIANTS.len());
@@ -43,6 +53,7 @@ fn draw_tetromino_pieces(commands: &mut Commands, spawn_area: &mut SpawnArea) ->
                     commands,
                     TETROMINO_COLORS[rand_index],
                     piece_pos,
+                    server,
                 ));
 
                 spawn_area.push(piece_pos);
@@ -57,6 +68,11 @@ pub fn spawn_tetromino(
     mut commands: Commands,
     mut segments: ResMut<TetrominoSegment>,
     mut spawn_area: ResMut<SpawnArea>,
+    server: Res<AssetServer>,
 ) {
-    *segments = TetrominoSegment(draw_tetromino_pieces(&mut commands, &mut spawn_area));
+    *segments = TetrominoSegment(draw_tetromino_pieces(
+        &mut commands,
+        &mut spawn_area,
+        &server,
+    ));
 }

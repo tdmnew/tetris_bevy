@@ -60,10 +60,10 @@ pub const TETROMINO_VARIANTS: [AreaSize; 5] = [
     T_SHAPE, 
 ];
 
-pub const TETROMINO_COLORS: [Color; 5] = [
-    Color::rgb(0.255, 0.165, 0.1),
-    Color::rgb(0.1, 0.128, 0.1),
-    Color::rgb(0.255, 0.255, 0.1),
-    Color::rgb(0.255, 0.1, 0.1),
-    Color::rgb(0.128, 0.1, 0.128),
+pub const TETROMINO_COLORS: [&str; 5] = [
+    "orange",
+    "green",
+    "yellow",
+    "red",
+    "purple"
 ];

@@ -17,6 +17,7 @@ pub fn game_over(
     mut despawned_pieces: Query<Entity, With<DespawnedTetrominoPiece>>,
     segments: ResMut<TetrominoSegment>,
     spawn_area: ResMut<SpawnArea>,
+    server: Res<AssetServer>,
 ) {
     if game_over_reader.read().next().is_some() {
         update_score_writer.send(UpdateScoreEvent);
@@ -29,7 +30,7 @@ pub fn game_over(
             commands.entity(ent).despawn();
         }
 
-        spawn_tetromino(commands, segments, spawn_area);
+        spawn_tetromino(commands, segments, spawn_area, server);
     }
 }
 
@@ -41,6 +42,7 @@ pub fn spawn_new_tetromino(
     mut segments: ResMut<TetrominoSegment>,
     positions: Query<&mut Position>,
     spawn_area: ResMut<SpawnArea>,
+    server: Res<AssetServer>,
 ) {
     if despawn_reader.read().next().is_some() {
         segments.clear();
@@ -61,7 +63,7 @@ pub fn spawn_new_tetromino(
                 .insert(DespawnedTetrominoPiece);
         }
 
-        spawn_tetromino(commands, segments, spawn_area);
+        spawn_tetromino(commands, segments, spawn_area, server);
     }
 }
 
